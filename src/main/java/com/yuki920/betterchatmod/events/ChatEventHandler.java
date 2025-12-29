@@ -61,27 +61,30 @@ public class ChatEventHandler {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        String messageUnformatted = event.message.getUnformattedText();
+        // Type 0 is a standard chat message, type 2 is an action bar message
+        if (event.type == 0) {
+            String messageUnformatted = event.message.getUnformattedText();
 
-        if (messageUnformatted.isEmpty()) {
-            lastMessageUnformatted = "";
-            lastMessageComponent = null;
-            duplicateCount = 1;
-            return;
-        }
+            if (messageUnformatted.isEmpty()) {
+                lastMessageUnformatted = "";
+                lastMessageComponent = null;
+                duplicateCount = 1;
+                return;
+            }
 
-        if (Config.duplicateMessagesEnabled && messageUnformatted.equals(lastMessageUnformatted)) {
-            duplicateCount++;
-            deleteLastChatLine();
+            if (Config.duplicateMessagesEnabled && messageUnformatted.equals(lastMessageUnformatted)) {
+                duplicateCount++;
+                deleteLastChatLine();
 
-            IChatComponent newMessage = this.lastMessageComponent.createCopy();
-            newMessage.appendText(" [x" + duplicateCount + "]");
-            event.message = newMessage;
+                IChatComponent newMessage = this.lastMessageComponent.createCopy();
+                newMessage.appendText(" [x" + duplicateCount + "]");
+                event.message = newMessage;
 
-        } else {
-            duplicateCount = 1;
-            this.lastMessageUnformatted = messageUnformatted;
-            this.lastMessageComponent = event.message.createCopy();
+            } else {
+                duplicateCount = 1;
+                this.lastMessageUnformatted = messageUnformatted;
+                this.lastMessageComponent = event.message.createCopy();
+            }
         }
 
         if (Config.mentionSoundEnabled) {

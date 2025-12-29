@@ -28,7 +28,7 @@ public class CustomGuiNewChat extends GuiNewChat {
             GlStateManager.popMatrix();
         }
 
-        if (Config.animationEnabled && !this.getChatOpen() && !messageTimestamps.isEmpty()) {
+        if (Config.animationEnabled && !messageTimestamps.isEmpty()) {
             long currentTime = System.currentTimeMillis();
             long lastMessageTime = messageTimestamps.get(0);
             long timeSinceLastMessage = currentTime - lastMessageTime;
