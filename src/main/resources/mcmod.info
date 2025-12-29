@@ -1,0 +1,16 @@
+[
+{
+  "modid": "betterchatmod",
+  "name": "Better Chat Mod",
+  "description": "Adds various chat improvements.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["yuki920"],
+  "credits": "The Forge and FML guys",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
