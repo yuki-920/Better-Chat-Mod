@@ -24,7 +24,8 @@ public class CustomGuiNewChat extends GuiNewChat {
         if (Config.backgroundEnabled) {
             GlStateManager.pushMatrix();
             GlStateManager.translate(0.0F, 0.0F, -200.0F);
-            Gui.drawRect(2, this.getChatHeight() - 2, this.getChatWidth() + 4, this.getChatHeight(), Config.backgroundAlpha << 24);
+            int alpha = (int) (Config.backgroundOpacity / 100.0F * 255.0F);
+            Gui.drawRect(2, this.getChatHeight() - 2, this.getChatWidth() + 4, this.getChatHeight(), alpha << 24);
             GlStateManager.popMatrix();
         }
 

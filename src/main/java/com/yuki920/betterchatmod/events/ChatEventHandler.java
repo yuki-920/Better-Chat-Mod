@@ -91,8 +91,14 @@ public class ChatEventHandler {
             String messageText = event.message.getUnformattedText().toLowerCase();
             String playerName = Minecraft.getMinecraft().thePlayer.getName().toLowerCase();
             String realName = Minecraft.getMinecraft().getSession().getUsername().toLowerCase();
+            String customNick = Config.mentionNickname.toLowerCase();
 
-            if (messageText.contains(playerName) || messageText.contains(realName)) {
+            boolean mentioned = messageText.contains(playerName) || messageText.contains(realName);
+            if (!customNick.isEmpty() && messageText.contains(customNick)) {
+                mentioned = true;
+            }
+
+            if (mentioned) {
                 Minecraft.getMinecraft().thePlayer.playSound("random.orb", 1.0F, 1.0F);
             }
         }
