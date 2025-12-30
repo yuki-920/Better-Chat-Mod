@@ -7,6 +7,10 @@ public class Config {
 
     private static Configuration config;
 
+    public static Configuration getConfig() {
+        return config;
+    }
+
     public static boolean animationEnabled = true;
     public static int animationSpeed = 100;
     public static boolean backgroundEnabled = false;

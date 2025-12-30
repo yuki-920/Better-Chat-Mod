@@ -1,8 +1,6 @@
 package com.yuki920.betterchatmod.commands;
 
-import com.yuki920.betterchatmod.client.gui.ModGuiConfig;
 import com.yuki920.betterchatmod.config.Config;
-import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
@@ -20,7 +18,7 @@ public class BetterChatCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/betterchat <gui|setnick|setting> [value]";
+        return "/betterchat <setnick|setting> [value]";
     }
 
     @Override
@@ -31,11 +29,6 @@ public class BetterChatCommand extends CommandBase {
         }
 
         String setting = args[0].toLowerCase();
-
-        if (setting.equals("gui")) {
-            Minecraft.getMinecraft().addScheduledTask(() -> Minecraft.getMinecraft().displayGuiScreen(new ModGuiConfig()));
-            return;
-        }
 
         if (setting.equals("setnick")) {
             if (args.length < 2) {
@@ -90,7 +83,7 @@ public class BetterChatCommand extends CommandBase {
     @Override
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "animation", "animation_speed", "background", "background_opacity", "duplicate_messages", "mention_sound", "setnick", "gui");
+            return getListOfStringsMatchingLastWord(args, "animation", "animation_speed", "background", "background_opacity", "duplicate_messages", "mention_sound", "setnick");
         } else if (args.length == 2) {
             String setting = args[0].toLowerCase();
             if (setting.equals("animation") || setting.equals("background") || setting.equals("duplicate_messages") || setting.equals("mention_sound")) {
