@@ -99,23 +99,20 @@ public class ChatEventHandler {
 
         String lastMessageBase = lastMessageText;
         int currentStack = 1;
-        IChatComponent baseComponent = event.message.createCopy();
 
         if (matcher.matches()) {
             lastMessageBase = matcher.group(1);
             currentStack = Integer.parseInt(matcher.group(2));
-            // To preserve formatting, we rebuild the base component from the last stacked message
-            String json = IChatComponent.Serializer.componentToJson(lastComponent);
-            String baseJson = json.replaceFirst(",?\" \\[x\\d+]\"", "");
-            baseComponent = IChatComponent.Serializer.jsonToComponent(baseJson);
         }
 
         if (currentMessageText.equals(lastMessageBase)) {
             deleteLastChatLine();
             int newStack = currentStack + 1;
-            IChatComponent newComponent = baseComponent.createCopy();
-            newComponent.appendText(" [x" + newStack + "]");
-            event.message = newComponent;
+
+            // Rebuild the component from the original message to preserve formatting
+            IChatComponent baseComponent = event.message.createCopy();
+            baseComponent.appendText(" [x" + newStack + "]");
+            event.message = baseComponent;
         }
     }
 
@@ -127,7 +124,7 @@ public class ChatEventHandler {
         String realName = Minecraft.getMinecraft().getSession().getUsername().toLowerCase();
         String customNick = Config.mentionNickname.toLowerCase();
 
-        boolean mentioned = messageText.contains(playerName) || messageText.contains(realName);
+        boolean mentioned = message.getUnformattedText().toLowerCase().contains(playerName) || messageText.contains(realName);
         if (!customNick.isEmpty() && messageText.contains(customNick)) {
             mentioned = true;
         }
