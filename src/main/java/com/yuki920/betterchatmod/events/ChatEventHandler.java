@@ -4,6 +4,7 @@ import com.yuki920.betterchatmod.config.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ChatLine;
 import net.minecraft.client.gui.GuiNewChat;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -98,24 +99,21 @@ public class ChatEventHandler {
 
         String lastMessageBase = lastMessageText;
         int currentStack = 1;
+        IChatComponent baseComponent = event.message.createCopy();
 
         if (matcher.matches()) {
             lastMessageBase = matcher.group(1);
             currentStack = Integer.parseInt(matcher.group(2));
+            // To preserve formatting, we rebuild the base component from the last stacked message
+            String json = IChatComponent.Serializer.componentToJson(lastComponent);
+            String baseJson = json.replaceFirst(",?\" \\[x\\d+]\"", "");
+            baseComponent = IChatComponent.Serializer.jsonToComponent(baseJson);
         }
 
         if (currentMessageText.equals(lastMessageBase)) {
             deleteLastChatLine();
             int newStack = currentStack + 1;
-            // Create a copy of the original component to preserve formatting
-            IChatComponent newComponent = lastComponent.createCopy();
-            // Remove the old stack count if it exists
-            String originalText = newComponent.getFormattedText();
-            int stackIndex = originalText.lastIndexOf(" [x");
-            if (stackIndex != -1) {
-                newComponent.getSiblings().clear();
-                newComponent = IChatComponent.Serializer.jsonToComponent(IChatComponent.Serializer.componentToJson(lastComponent).replaceFirst(" \\[x\\d+]$", ""));
-            }
+            IChatComponent newComponent = baseComponent.createCopy();
             newComponent.appendText(" [x" + newStack + "]");
             event.message = newComponent;
         }
