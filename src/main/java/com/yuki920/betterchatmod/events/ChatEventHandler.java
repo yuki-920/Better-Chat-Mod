@@ -10,12 +10,12 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChatEventHandler {
 
-    private IChatComponent lastMessageComponent;
-    private String lastMessageUnformatted = "";
-    private int duplicateCount = 1;
+    private static final Pattern STACK_PATTERN = Pattern.compile("^(.*) \\[x(\\d+)]$");
 
     private static Field drawnChatLinesField;
     private static Field chatLinesField;
@@ -59,48 +59,83 @@ public class ChatEventHandler {
         }
     }
 
+    private List<ChatLine> getDrawnChatLines() {
+        GuiNewChat chatGUI = Minecraft.getMinecraft().ingameGUI.getChatGUI();
+        if (drawnChatLinesField == null) return null;
+        try {
+            @SuppressWarnings("unchecked")
+            List<ChatLine> drawnChatLines = (List<ChatLine>) drawnChatLinesField.get(chatGUI);
+            return drawnChatLines;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        // Type 0 is a standard chat message, type 2 is an action bar message
-        if (event.type == 0) {
-            String messageUnformatted = event.message.getUnformattedText();
-
-            if (messageUnformatted.isEmpty()) {
-                lastMessageUnformatted = "";
-                lastMessageComponent = null;
-                duplicateCount = 1;
-                return;
-            }
-
-            if (Config.duplicateMessagesEnabled && messageUnformatted.equals(lastMessageUnformatted)) {
-                duplicateCount++;
-                deleteLastChatLine();
-
-                IChatComponent newMessage = this.lastMessageComponent.createCopy();
-                newMessage.appendText(" [x" + duplicateCount + "]");
-                event.message = newMessage;
-
-            } else {
-                duplicateCount = 1;
-                this.lastMessageUnformatted = messageUnformatted;
-                this.lastMessageComponent = event.message.createCopy();
-            }
+        // Mention sound should work for any message type except action bar
+        if (event.type != 2) {
+            handleMentionSound(event.message);
         }
 
-        if (Config.mentionSoundEnabled) {
-            String messageText = event.message.getUnformattedText().toLowerCase();
-            String playerName = Minecraft.getMinecraft().thePlayer.getName().toLowerCase();
-            String realName = Minecraft.getMinecraft().getSession().getUsername().toLowerCase();
-            String customNick = Config.mentionNickname.toLowerCase();
+        // Only process standard chat messages for stacking
+        if (event.type != 0 || !Config.duplicateMessagesEnabled) {
+            return;
+        }
 
-            boolean mentioned = messageText.contains(playerName) || messageText.contains(realName);
-            if (!customNick.isEmpty() && messageText.contains(customNick)) {
-                mentioned = true;
-            }
+        List<ChatLine> drawnChatLines = getDrawnChatLines();
+        if (drawnChatLines == null || drawnChatLines.isEmpty()) {
+            return;
+        }
 
-            if (mentioned) {
-                Minecraft.getMinecraft().thePlayer.playSound("random.orb", 1.0F, 1.0F);
+        ChatLine lastLine = drawnChatLines.get(0);
+        IChatComponent lastComponent = lastLine.getChatComponent();
+        String lastMessageText = lastComponent.getUnformattedText();
+        String currentMessageText = event.message.getUnformattedText();
+
+        Matcher matcher = STACK_PATTERN.matcher(lastMessageText);
+
+        String lastMessageBase = lastMessageText;
+        int currentStack = 1;
+
+        if (matcher.matches()) {
+            lastMessageBase = matcher.group(1);
+            currentStack = Integer.parseInt(matcher.group(2));
+        }
+
+        if (currentMessageText.equals(lastMessageBase)) {
+            deleteLastChatLine();
+            int newStack = currentStack + 1;
+            // Create a copy of the original component to preserve formatting
+            IChatComponent newComponent = lastComponent.createCopy();
+            // Remove the old stack count if it exists
+            String originalText = newComponent.getFormattedText();
+            int stackIndex = originalText.lastIndexOf(" [x");
+            if (stackIndex != -1) {
+                newComponent.getSiblings().clear();
+                newComponent = IChatComponent.Serializer.jsonToComponent(IChatComponent.Serializer.componentToJson(lastComponent).replaceFirst(" \\[x\\d+]$", ""));
             }
+            newComponent.appendText(" [x" + newStack + "]");
+            event.message = newComponent;
+        }
+    }
+
+    private void handleMentionSound(IChatComponent message) {
+        if (!Config.mentionSoundEnabled) return;
+
+        String messageText = message.getUnformattedText().toLowerCase();
+        String playerName = Minecraft.getMinecraft().thePlayer.getName().toLowerCase();
+        String realName = Minecraft.getMinecraft().getSession().getUsername().toLowerCase();
+        String customNick = Config.mentionNickname.toLowerCase();
+
+        boolean mentioned = messageText.contains(playerName) || messageText.contains(realName);
+        if (!customNick.isEmpty() && messageText.contains(customNick)) {
+            mentioned = true;
+        }
+
+        if (mentioned) {
+            Minecraft.getMinecraft().thePlayer.playSound("random.orb", 1.0F, 1.0F);
         }
     }
 }
