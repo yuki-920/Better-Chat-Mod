@@ -106,13 +106,19 @@ public class ChatEventHandler {
         }
 
         if (currentMessageText.equals(lastMessageBase)) {
-            deleteLastChatLine();
-            int newStack = currentStack + 1;
+            // Cancel the original event to prevent the message from being added automatically
+            event.setCanceled(true);
 
-            // Rebuild the component from the original message to preserve formatting
-            IChatComponent baseComponent = event.message.createCopy();
-            baseComponent.appendText(" [x" + newStack + "]");
-            event.message = baseComponent;
+            // Manually delete the previous stacked message from the chat
+            deleteLastChatLine();
+
+            // Create the new message with the incremented stack count
+            int newStack = currentStack + 1;
+            IChatComponent newComponent = event.message.createCopy();
+            newComponent.appendText(" [x" + newStack + "]");
+
+            // Manually add the new, updated message to the chat GUI
+            Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(newComponent);
         }
     }
 
