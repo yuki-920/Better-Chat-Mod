@@ -10,6 +10,7 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,13 +91,29 @@ public class ChatEventHandler {
             return;
         }
 
-        ChatLine lastLine = drawnChatLines.get(0);
-        IChatComponent lastComponent = lastLine.getChatComponent();
-        String lastMessageText = lastComponent.getUnformattedText();
+        // Group all lines from the last message using the update counter
+        int latestUpdateCounter = drawnChatLines.get(0).getUpdatedCounter();
+        List<ChatLine> lastMessageLines = new ArrayList<>();
+        for (ChatLine line : drawnChatLines) {
+            if (line.getUpdatedCounter() == latestUpdateCounter) {
+                lastMessageLines.add(line);
+            } else {
+                // Stop as soon as we hit a line from a previous message
+                break;
+            }
+        }
+
+        // Reconstruct the full message text from all its lines
+        StringBuilder lastMessageBuilder = new StringBuilder();
+        // Iterate in reverse to assemble the message in the correct order
+        for (int i = lastMessageLines.size() - 1; i >= 0; i--) {
+            lastMessageBuilder.append(lastMessageLines.get(i).getChatComponent().getUnformattedText());
+        }
+        String lastMessageText = lastMessageBuilder.toString();
         String currentMessageText = event.message.getUnformattedText();
 
+        // Check for an existing stack and deconstruct the message
         Matcher matcher = STACK_PATTERN.matcher(lastMessageText);
-
         String lastMessageBase = lastMessageText;
         int currentStack = 1;
 
@@ -105,12 +122,15 @@ public class ChatEventHandler {
             currentStack = Integer.parseInt(matcher.group(2));
         }
 
+        // If the new message matches the base of the last one, stack it
         if (currentMessageText.equals(lastMessageBase)) {
             // Cancel the original event to prevent the message from being added automatically
             event.setCanceled(true);
 
-            // Manually delete the previous stacked message from the chat
-            deleteLastChatLine();
+            // Manually delete all lines from the previous stacked message
+            for (int i = 0; i < lastMessageLines.size(); i++) {
+                deleteLastChatLine();
+            }
 
             // Create the new message with the incremented stack count
             int newStack = currentStack + 1;
