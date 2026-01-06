@@ -81,8 +81,8 @@ public class ChatEventHandler {
             handleMentionSound(event.message);
         }
 
-        // Only process standard chat messages for stacking
-        if (event.type != 0 || !Config.duplicateMessagesEnabled) {
+        // Do not process action bar messages, or if the mod is disabled
+        if (event.type == 2 || !Config.duplicateMessagesEnabled) {
             return;
         }
 
