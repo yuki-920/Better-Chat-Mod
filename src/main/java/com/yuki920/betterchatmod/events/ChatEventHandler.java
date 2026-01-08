@@ -122,8 +122,13 @@ public class ChatEventHandler {
             currentStack = Integer.parseInt(matcher.group(2));
         }
 
+        // Sanitize messages by removing non-printable characters and trimming whitespace
+        // This handles cases where servers add invisible characters to prevent spam filters
+        String sanitizedCurrent = currentMessageText.replaceAll("\\p{C}", "").trim();
+        String sanitizedLastBase = lastMessageBase.replaceAll("\\p{C}", "").trim();
+
         // If the new message matches the base of the last one, stack it
-        if (currentMessageText.equals(lastMessageBase)) {
+        if (!sanitizedCurrent.isEmpty() && sanitizedCurrent.equals(sanitizedLastBase)) {
             // Cancel the original event to prevent the message from being added automatically
             event.setCanceled(true);
 
