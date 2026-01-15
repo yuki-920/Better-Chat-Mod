@@ -91,60 +91,80 @@ public class ChatEventHandler {
             return;
         }
 
-        // For system messages (type 1), we treat each line as a separate message.
-        // For player chat (type 0), we group lines from the same message using the update counter.
-        String lastMessageText;
-        List<ChatLine> lastMessageLines = new ArrayList<>();
+        String currentMessageText = event.message.getUnformattedText();
+        String sanitizedCurrent = currentMessageText.replaceAll("\\p{C}", "").trim();
 
-        if (event.type == 1) {
-            // System message: only consider the very last line
-            ChatLine lastLine = drawnChatLines.get(0);
-            lastMessageLines.add(lastLine);
-            lastMessageText = lastLine.getChatComponent().getUnformattedText();
+        if (sanitizedCurrent.isEmpty()) {
+            return;
+        }
+
+        // We will determine which lines to replace and what the base text is.
+        List<ChatLine> linesToDelete = null;
+        String baseTextToCompare;
+        int currentStack = 1;
+
+        // --- Strategy 1: Check single-line message ---
+        // This handles most server/plugin messages and single-line player chat.
+        ChatLine lastLine = drawnChatLines.get(0);
+        String lastLineText = lastLine.getChatComponent().getUnformattedText();
+
+        Matcher lastLineMatcher = STACK_PATTERN.matcher(lastLineText);
+        if (lastLineMatcher.matches()) {
+            baseTextToCompare = lastLineMatcher.group(1);
+            currentStack = Integer.parseInt(lastLineMatcher.group(2));
         } else {
-            // Player chat: reconstruct the full message from all its lines
-            int latestUpdateCounter = drawnChatLines.get(0).getUpdatedCounter();
+            baseTextToCompare = lastLineText;
+            currentStack = 1;
+        }
+
+        // Compare the sanitized new message with the sanitized base of the last line.
+        if (sanitizedCurrent.equals(baseTextToCompare.replaceAll("\\p{C}", "").trim())) {
+            linesToDelete = new ArrayList<>();
+            linesToDelete.add(lastLine);
+        } else {
+            // --- Strategy 2: Check multi-line message ---
+            // If the single-line check failed, it could be a wrapped message.
+            int latestUpdateCounter = lastLine.getUpdatedCounter();
+            List<ChatLine> potentialMultiLine = new ArrayList<>();
             for (ChatLine line : drawnChatLines) {
                 if (line.getUpdatedCounter() == latestUpdateCounter) {
-                    lastMessageLines.add(line);
+                    potentialMultiLine.add(line);
                 } else {
-                    // Stop as soon as we hit a line from a previous message
                     break;
                 }
             }
 
-            StringBuilder lastMessageBuilder = new StringBuilder();
-            // Iterate in reverse to assemble the message in the correct order
-            for (int i = lastMessageLines.size() - 1; i >= 0; i--) {
-                lastMessageBuilder.append(lastMessageLines.get(i).getChatComponent().getUnformattedText());
+            // Only proceed if it's actually a multi-line message; otherwise, strategy 1 would have passed.
+            if (potentialMultiLine.size() > 1) {
+                StringBuilder lastMessageBuilder = new StringBuilder();
+                // Iterate in reverse to assemble the message in the correct order
+                for (int i = potentialMultiLine.size() - 1; i >= 0; i--) {
+                    lastMessageBuilder.append(potentialMultiLine.get(i).getChatComponent().getUnformattedText());
+                }
+                String fullLastMessageText = lastMessageBuilder.toString();
+
+                Matcher fullMsgMatcher = STACK_PATTERN.matcher(fullLastMessageText);
+                if (fullMsgMatcher.matches()) {
+                    baseTextToCompare = fullMsgMatcher.group(1);
+                    currentStack = Integer.parseInt(fullMsgMatcher.group(2));
+                } else {
+                    baseTextToCompare = fullLastMessageText;
+                    currentStack = 1;
+                }
+
+                if (sanitizedCurrent.equals(baseTextToCompare.replaceAll("\\p{C}", "").trim())) {
+                    linesToDelete = potentialMultiLine;
+                }
             }
-            lastMessageText = lastMessageBuilder.toString();
         }
 
-        String currentMessageText = event.message.getUnformattedText();
-
-        // Check for an existing stack and deconstruct the message
-        Matcher matcher = STACK_PATTERN.matcher(lastMessageText);
-        String lastMessageBase = lastMessageText;
-        int currentStack = 1;
-
-        if (matcher.matches()) {
-            lastMessageBase = matcher.group(1);
-            currentStack = Integer.parseInt(matcher.group(2));
-        }
-
-        // Sanitize messages by removing non-printable characters and trimming whitespace
-        // This handles cases where servers add invisible characters to prevent spam filters
-        String sanitizedCurrent = currentMessageText.replaceAll("\\p{C}", "").trim();
-        String sanitizedLastBase = lastMessageBase.replaceAll("\\p{C}", "").trim();
-
-        // If the new message matches the base of the last one, stack it
-        if (!sanitizedCurrent.isEmpty() && sanitizedCurrent.equals(sanitizedLastBase)) {
+        // If a match was found with either strategy, perform the stack.
+        if (linesToDelete != null) {
             // Cancel the original event to prevent the message from being added automatically
             event.setCanceled(true);
 
             // Manually delete all lines from the previous stacked message
-            for (int i = 0; i < lastMessageLines.size(); i++) {
+            for (int i = 0; i < linesToDelete.size(); i++) {
                 deleteLastChatLine();
             }
 
