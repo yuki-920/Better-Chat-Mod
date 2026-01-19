@@ -85,14 +85,13 @@ public class ChatEventHandler {
             return;
         }
 
-        // Create the normalized key for comparison, as per instructions.
-        String currentMessageKey = net.minecraft.util.EnumChatFormatting.getTextWithoutFormattingCodes(
-            event.message.getFormattedText()
-        )
-        .replace('\u00A0', ' ') // Replace non-breaking spaces
-        .replaceAll("[\u200B-\u200D\uFEFF]", "") // Remove zero-width characters
-        .replaceAll("[\r\n]", "") // Remove newline characters
-        .trim();
+        // Create the normalized key for comparison using the strictest method, as per instructions.
+        String currentMessageKey = event.message.getUnformattedText()
+                .replace('\u00A0', ' ') // Replace non-breaking spaces
+                .replaceAll("[\u200B-\u200D\uFEFF]", "") // Remove zero-width characters
+                .replaceAll("[\r\n]", "") // Remove newline characters
+                .replaceAll("\\s+", " ") // Collapse consecutive spaces
+                .trim();
 
         // If the new message is the same as the last one, stack it.
         if (currentMessageKey.equals(this.lastMessageKey)) {
