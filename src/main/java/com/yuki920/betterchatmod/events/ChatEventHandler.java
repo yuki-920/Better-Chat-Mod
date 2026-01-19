@@ -91,35 +91,26 @@ public class ChatEventHandler {
             return;
         }
 
-        // For system messages (type 1), we treat each line as a separate message.
-        // For player chat (type 0), we group lines from the same message using the update counter.
+        // Group lines from the same message using the update counter.
         String lastMessageText;
         List<ChatLine> lastMessageLines = new ArrayList<>();
 
-        if (event.type == 1) {
-            // System message: only consider the very last line
-            ChatLine lastLine = drawnChatLines.get(0);
-            lastMessageLines.add(lastLine);
-            lastMessageText = lastLine.getChatComponent().getUnformattedText();
-        } else {
-            // Player chat: reconstruct the full message from all its lines
-            int latestUpdateCounter = drawnChatLines.get(0).getUpdatedCounter();
-            for (ChatLine line : drawnChatLines) {
-                if (line.getUpdatedCounter() == latestUpdateCounter) {
-                    lastMessageLines.add(line);
-                } else {
-                    // Stop as soon as we hit a line from a previous message
-                    break;
-                }
+        int latestUpdateCounter = drawnChatLines.get(0).getUpdatedCounter();
+        for (ChatLine line : drawnChatLines) {
+            if (line.getUpdatedCounter() == latestUpdateCounter) {
+                lastMessageLines.add(line);
+            } else {
+                // Stop as soon as we hit a line from a previous message
+                break;
             }
-
-            StringBuilder lastMessageBuilder = new StringBuilder();
-            // Iterate in reverse to assemble the message in the correct order
-            for (int i = lastMessageLines.size() - 1; i >= 0; i--) {
-                lastMessageBuilder.append(lastMessageLines.get(i).getChatComponent().getUnformattedText());
-            }
-            lastMessageText = lastMessageBuilder.toString();
         }
+
+        StringBuilder lastMessageBuilder = new StringBuilder();
+        // Iterate in reverse to assemble the message in the correct order
+        for (int i = lastMessageLines.size() - 1; i >= 0; i--) {
+            lastMessageBuilder.append(lastMessageLines.get(i).getChatComponent().getUnformattedText());
+        }
+        lastMessageText = lastMessageBuilder.toString();
 
         String currentMessageText = event.message.getUnformattedText();
 
