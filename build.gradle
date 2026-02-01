@@ -30,22 +30,35 @@ minecraft {
     makeObfSourceJar = false
 }
 
-mixin {
-    add sourceSets.main, "mixins.betterchatmod.refmap.json"
-}
-
 repositories {
     maven { url = "https://repo.spongepowered.org/maven" }
 }
 
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
 dependencies {
-    compile('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
+    shade('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
+        exclude module: 'gson'
+        exclude module: 'commons-io'
     }
 }
 
+mixin {
+    add sourceSets.main, "mixins.betterchatmod.refmap.json"
+}
+
 jar {
+    configurations.shade.each { dep ->
+        from(project.zipTree(dep)) {
+            exclude 'META-INF', 'META-INF/**'
+        }
+    }
+    
     manifest.attributes(
         "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
         "TweakOrder": 0,
