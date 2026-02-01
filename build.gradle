@@ -18,7 +18,7 @@ compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
 }
 
-version = "1.0.4-Beta"
+version = "1.0.5"
 group = "com.yuki920.betterchatmod"
 archivesBaseName = "betterchatmod"
 
@@ -35,7 +35,6 @@ repositories {
 }
 
 dependencies {
-    // providedを使用してコンパイル時のみ使用、jarには含めない
     compile('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'

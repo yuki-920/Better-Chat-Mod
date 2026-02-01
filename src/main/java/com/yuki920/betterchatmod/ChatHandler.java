@@ -26,7 +26,6 @@ public class ChatHandler {
 
     private static final Map<Integer, ChatEntry> chatMessageMap = new HashMap<>();
     private static final Map<Integer, Set<ChatLine>> messagesForHash = new HashMap<>();
-    private static Minecraft mc;
     
     private static final String chatTimestampRegex = "^(?:\\[\\d\\d:\\d\\d(:\\d\\d)?(?: AM| PM|)]|<\\d\\d:\\d\\d>) ";
     private static final DecimalFormat decimalFormat = new DecimalFormat("#,###");
@@ -39,17 +38,13 @@ public class ChatHandler {
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
-            // Minecraftインスタンスを遅延初期化
-            if (mc == null) {
-                mc = Minecraft.getMinecraft();
-            }
+            Minecraft mc = Minecraft.getMinecraft();
             
             // プレイヤー名を更新
             if (mc.thePlayer != null) {
                 playerNames.clear();
                 playerNames.add(mc.thePlayer.getName());
                 playerNames.add(mc.thePlayer.getDisplayNameString());
-                // Tab補完から取得したニックネームも追加可能
             }
             
             if (ticks++ >= 12000) {
@@ -73,6 +68,8 @@ public class ChatHandler {
     public void onChatReceived(ClientChatReceivedEvent event) {
         if (event.type == 2) return; // ゲーム情報は無視
         
+        Minecraft mc = Minecraft.getMinecraft();
+        
         // メンション検出
         if (ChatConfig.playSoundOnMention && mc.thePlayer != null) {
             String message = event.message.getUnformattedText().toLowerCase();
@@ -86,6 +83,7 @@ public class ChatHandler {
     }
     
     private void playMentionSound() {
+        Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer != null) {
             mc.thePlayer.playSound(
                 ChatConfig.mentionSound, 
@@ -119,7 +117,7 @@ public class ChatHandler {
                         entry.messageCount++;
                         entry.lastSeenMessageMillis = currentTime;
                         chatComponent.appendSibling(new ChatComponentIgnored(
-                            EnumChatFormatting.GRAY + " (" + decimalFormat.format(entry.messageCount) + ")"));
+                            EnumChatFormatting.GRAY + " [x]" + decimalFormat.format(entry.messageCount) + "]"));
                     }
                 }
             }
@@ -137,14 +135,11 @@ public class ChatHandler {
     }
 
     private static boolean deleteMessageByHash(int hashCode) {
-        if (mc == null) {
-            mc = Minecraft.getMinecraft();
-        }
-        
         if (!messagesForHash.containsKey(hashCode) || messagesForHash.get(hashCode).isEmpty()) {
             return false;
         }
 
+        Minecraft mc = Minecraft.getMinecraft();
         final Set<ChatLine> toRemove = messagesForHash.get(hashCode);
         messagesForHash.remove(hashCode);
 

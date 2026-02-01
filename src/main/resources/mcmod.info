@@ -2,7 +2,7 @@
   "modid": "betterchatmod",
   "name": "Better Chat Mod",
   "description": "Compacts duplicate chat messages and plays sound on mention",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "mcversion": "1.8.9",
   "url": "",
   "updateUrl": "",
