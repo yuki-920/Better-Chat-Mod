@@ -13,6 +13,11 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 
+sourceCompatibility = targetCompatibility = '1.8'
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+}
+
 version = "1.0.4-Beta"
 group = "com.yuki920.betterchatmod"
 archivesBaseName = "betterchatmod"
