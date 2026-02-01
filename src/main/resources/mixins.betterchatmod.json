@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.7",
+  "package": "com.yuki920.betterchatmod.mixins",
+  "refmap": "mixins.betterchatmod.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "GuiNewChatAccessor",
+    "MixinGuiNewChat"
+  ],
+  "client": [],
+  "server": []
+}
