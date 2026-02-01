@@ -40,7 +40,7 @@ configurations {
 }
 
 dependencies {
-    shade('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
+    shade('org.spongepowered:mixin:0.8.5') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
         exclude module: 'gson'
