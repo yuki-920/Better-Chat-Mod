@@ -1,4 +1,3 @@
-
 buildscript {
     repositories {
         jcenter()
@@ -35,9 +34,14 @@ mixin {
     add sourceSets.main, "mixins.betterchatmod.refmap.json"
 }
 
+repositories {
+    maven { url = "https://repo.spongepowered.org/maven" }
+}
+
 dependencies {
     compile('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
         exclude module: 'launchwrapper'
+        exclude module: 'guava'
     }
 }
 
