@@ -30,10 +30,12 @@ repositories {
 }
 
 dependencies {
-    // Mixinをcompile onlyにして、jarに含めない
-    compileOnly('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
+    // providedを使用してコンパイル時のみ使用、jarには含めない
+    compile('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
+        exclude module: 'gson'
+        exclude module: 'commons-io'
     }
 }
 
@@ -42,6 +44,9 @@ mixin {
 }
 
 jar {
+    // Mixinライブラリを除外
+    exclude 'org/spongepowered/**'
+    
     manifest.attributes(
         "FMLCorePluginContainsFMLMod": "true",
         "ForceLoadAsMod": "true",
