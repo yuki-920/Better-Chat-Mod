@@ -13,12 +13,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 
-sourceCompatibility = targetCompatibility = '1.8'
-compileJava {
-    sourceCompatibility = targetCompatibility = '1.8'
-}
-
-version = "1.0.0"
+version = "1.0.4-Beta"
 group = "com.yuki920.betterchatmod"
 archivesBaseName = "betterchatmod"
 
@@ -34,17 +29,11 @@ repositories {
     maven { url = "https://repo.spongepowered.org/maven" }
 }
 
-configurations {
-    shade
-    compile.extendsFrom shade
-}
-
 dependencies {
-    shade('org.spongepowered:mixin:0.8.5') {
+    // Mixinをcompile onlyにして、jarに含めない
+    compileOnly('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
-        exclude module: 'gson'
-        exclude module: 'commons-io'
     }
 }
 
@@ -53,25 +42,16 @@ mixin {
 }
 
 jar {
-    configurations.shade.each { dep ->
-        from(project.zipTree(dep)) {
-            exclude 'META-INF', 'META-INF/**'
-        }
-    }
-    
     manifest.attributes(
-        "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
-        "TweakOrder": 0,
         "FMLCorePluginContainsFMLMod": "true",
         "ForceLoadAsMod": "true",
         "MixinConfigs": "mixins.betterchatmod.json"
     )
 }
 
-// reobfタスクを完全に無効化
+// reobfタスクを無効化
 afterEvaluate {
     reobfJar.enabled = false
 }
 
-// buildタスクからreobfJarへの依存を削除
 build.dependsOn.remove('reobfJar')
