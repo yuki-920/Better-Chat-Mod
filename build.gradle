@@ -68,9 +68,10 @@ jar {
     )
 }
 
-reobf {
-    jar {
-        extraLines += "PK: org/spongepowered org/spongepowered"
-    }
+// reobfタスクを完全に無効化
+afterEvaluate {
+    reobfJar.enabled = false
 }
 
+// buildタスクからreobfJarへの依存を削除
+build.dependsOn.remove('reobfJar')
