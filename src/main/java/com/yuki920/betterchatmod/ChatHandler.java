@@ -26,7 +26,7 @@ public class ChatHandler {
 
     private static final Map<Integer, ChatEntry> chatMessageMap = new HashMap<>();
     private static final Map<Integer, Set<ChatLine>> messagesForHash = new HashMap<>();
-    private static final Minecraft mc = Minecraft.getMinecraft();
+    private static Minecraft mc;
     
     private static final String chatTimestampRegex = "^(?:\\[\\d\\d:\\d\\d(:\\d\\d)?(?: AM| PM|)]|<\\d\\d:\\d\\d>) ";
     private static final DecimalFormat decimalFormat = new DecimalFormat("#,###");
@@ -39,6 +39,11 @@ public class ChatHandler {
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
+            // Minecraftインスタンスを遅延初期化
+            if (mc == null) {
+                mc = Minecraft.getMinecraft();
+            }
+            
             // プレイヤー名を更新
             if (mc.thePlayer != null) {
                 playerNames.clear();
@@ -114,12 +119,13 @@ public class ChatHandler {
                         entry.messageCount++;
                         entry.lastSeenMessageMillis = currentTime;
                         chatComponent.appendSibling(new ChatComponentIgnored(
-                            EnumChatFormatting.GRAY + " [x" + decimalFormat.format(entry.messageCount) + "]"));
+                            EnumChatFormatting.GRAY + " (" + decimalFormat.format(entry.messageCount) + ")"));
                     }
                 }
             }
         }
     }
+
     public static void setChatLine_addToList(ChatLine line) {
         if (currentMessageHash != -1) {
             messagesForHash.computeIfAbsent(currentMessageHash, k -> new HashSet<>()).add(line);
@@ -131,6 +137,10 @@ public class ChatHandler {
     }
 
     private static boolean deleteMessageByHash(int hashCode) {
+        if (mc == null) {
+            mc = Minecraft.getMinecraft();
+        }
+        
         if (!messagesForHash.containsKey(hashCode) || messagesForHash.get(hashCode).isEmpty()) {
             return false;
         }
