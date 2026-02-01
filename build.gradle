@@ -67,3 +67,10 @@ jar {
         "MixinConfigs": "mixins.betterchatmod.json"
     )
 }
+
+reobf {
+    jar {
+        extraLines += "PK: org/spongepowered org/spongepowered"
+    }
+}
+
